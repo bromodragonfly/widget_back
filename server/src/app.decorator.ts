@@ -5,6 +5,6 @@ export const OriginalUrl = createParamDecorator(
     const request = ctx.switchToHttp().getRequest();
     const url = request.originalUrl.split('=')[1];
 
-    return data ? url?.[data] : url;
+    return url;
   },
 );

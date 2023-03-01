@@ -2,10 +2,11 @@ import axios from 'axios';
 import { Logger } from '@nestjs/common';
 import { amoError } from '../@types/amo_types/amo.interfaces';
 import * as fs from 'fs';
+import config from './config';
 // import { RefreshAccessTokenDto } from './dto/get-access-token.dto';
 
 export class AmoApi {
-  private readonly logger = new Logger();
+  private logger = new Logger();
 
   AMO_TOKEN_PATH: string;
   LIMIT: number;
@@ -16,7 +17,7 @@ export class AmoApi {
   code: string;
 
   constructor(subdomain: string, code: string) {
-    this.AMO_TOKEN_PATH = `amo_token${subdomain}.json`;
+    this.AMO_TOKEN_PATH = `./${subdomain}_amo_token.json`;
     this.LIMIT = 200;
     this.ROOT_PATH = `https://${subdomain}.amocrm.ru`;
     this.access_token = '';
@@ -24,7 +25,7 @@ export class AmoApi {
     this.code = code;
   }
 
-  private readonly authChecker = <T extends any[], D>(
+  private authChecker = <T extends any[], D>(
     request: (...args: T) => Promise<D>,
   ) => {
     return async (...args: T): Promise<D> => {
@@ -34,14 +35,16 @@ export class AmoApi {
         );
       }
       return request(...args).catch(async (err: amoError) => {
-        this.logger.error(err.response);
-        this.logger.error(err);
-        this.logger.error(err.response.data);
+        const errorBody = err.response ? err.response.data : null;
+        console.log(err.response);
+        this.logger.error(errorBody);
+        // this.logger.error(err);
+        // this.logger.error(err.response.data);
         const data = err.response.data;
-        if ('validation-errors' in data) {
-          //   data['validation-errors'].forEach((element) =>
-          //     this.logger.debug(element.errors),
-          //   );
+        if ('validation-errors' in errorBody) {
+          // errorBody['validation-errors'].forEach((element) =>
+          //   this.logger.debug(element.errors),
+          // );
           this.logger.error('args', JSON.stringify(args, null, 2));
         }
         if (data.status == 401 && data.title === 'Unauthorized') {
@@ -58,11 +61,11 @@ export class AmoApi {
   async requestAccessToken() {
     return axios
       .post(`${this.ROOT_PATH}/oauth2/access_token`, {
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        grant_type: 'refresh_token',
+        client_id: config.CLIENT_ID,
+        client_secret: config.CLIENT_SECRET,
+        grant_type: 'authorization_code',
         code: this.code,
-        redirect_uri: process.env.REDIRECT_URI,
+        redirect_uri: config.REDIRECT_URI,
       })
       .then((res) => {
         return res.data;
@@ -89,6 +92,7 @@ export class AmoApi {
       );
       this.logger.debug('Trying to get a new token');
       const token = await this.requestAccessToken();
+      this.logger.debug(token);
       fs.appendFileSync(this.AMO_TOKEN_PATH, JSON.stringify(token));
 
       this.access_token = token.access_token;
@@ -100,11 +104,11 @@ export class AmoApi {
   async refreshToken() {
     return axios
       .post(`${this.ROOT_PATH}/oauth2/access_token`, {
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
+        client_id: config.CLIENT_ID,
+        client_secret: config.CLIENT_SECRET,
         grant_type: 'refresh_token',
         refresh_token: this.refresh_token,
-        redirect_uri: process.env.REDIRECT_URI,
+        redirect_uri: config.REDIRECT_URI,
       })
       .then((res) => {
         this.logger.debug('Token updated successfully');

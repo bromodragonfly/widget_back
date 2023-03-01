@@ -21,14 +21,9 @@ export class AppService {
 
   async getLogin(subdomain: string, code: string) {
     const amoService = new AmoApi(subdomain, code);
-    amoService.getAccessToken().then((res) => console.log(res));
-    const isUserInDb = this.userServise.findUserBySubdomain(subdomain);
-    if (isUserInDb) {
-      return this.userServise.updateUser({
-        subdomain: subdomain,
-        installed: true,
-      });
-    } else {
+    amoService.getAccessToken();
+    const isUserInDb = await this.userServise.findUserBySubdomain(subdomain);
+    if (!isUserInDb) {
       const result = await amoService.getAccountData(); // TODO нужно описать приходящий объект
       const accId = Number(result.id);
       const newUser: newUser = {
@@ -40,16 +35,19 @@ export class AppService {
         startUsingDate: dayjs().format().slice(0, 10),
         finishUsingDate: dayjs().add(15, 'days').format().slice(0, 10),
       };
-      this.userServise.createNewUser(newUser);
+      return await this.userServise.createNewUser(newUser);
     }
+    return await this.userServise.updateUser({
+      subdomain: subdomain,
+      installed: true,
+    });
   }
 
   async getDelete(accountId: number) {
-    // TODO необходимо принимать в метод файнд либо строку(subdomain) либо номер(accountId)
     const user = await this.userServise.findUserByAccountID(accountId);
     const subdomain = user.widgetUserSubdomain;
 
-    this.userServise.updateUser({ subdomain, installed: false });
+    return await this.userServise.updateUser({ subdomain, installed: false });
   }
 
   async redirectReducer(action: string, user: LoginUserDto | DeleteUserDto) {
@@ -76,7 +74,6 @@ export class AppService {
         new Date(dayjs().format().slice(0, 10)).getTime();
 
       const returnedData = {
-        response: 'paid',
         paid: user.paid,
         testPeriod: user.testPeriod,
         startUsingDate: user.startUsingDate,
@@ -117,6 +114,6 @@ export class AppService {
     if (user.testPeriod || user.paid) {
       return hookEntity;
     }
-    return this.logger.debug('Нужно оплатить виджет', user);
+    return this.logger.error('Нужно оплатить виджет', user);
   }
 }

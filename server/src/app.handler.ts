@@ -6,11 +6,12 @@ import { HookBodyDto } from './amo/dto/hook/hook-body.dto';
 // TODO entity (скорее всего мне уже придет HookData)
 
 export const getHookEntity = (entity: HookBodyDto): HookEntity => {
-  //   const userId = req.body.action.settings.widget.settings.users.split(',');
   //   const hookData = entity.body;
 
   const leadId = entity.event.data.id;
   const text = entity.action.settings.widget.settings.text;
+
+  const userId = entity.action.settings.widget.settings.users;
 
   const userPicture =
     entity.action.settings.widget.settings.userPicture === ''
@@ -33,6 +34,7 @@ export const getHookEntity = (entity: HookBodyDto): HookEntity => {
   return {
     leadId,
     text,
+    users: userId,
     picture: resPicture,
     subdomain: subDomain,
     audio: isAudio,

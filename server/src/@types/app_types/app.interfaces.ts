@@ -9,6 +9,7 @@ export interface HookEntity {
   leadId: string | number;
   text: string;
   picture: string;
+  users: string;
   subdomain: string;
   audio: string;
   userPicture?: string;

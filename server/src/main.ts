@@ -7,6 +7,7 @@ const start = async () => {
 
     const app = await NestFactory.create(AppModule, {
       logger: ['debug', 'error'],
+      cors: true,
     });
 
     await app

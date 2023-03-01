@@ -1,12 +1,25 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'; // Sse +
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Query,
+  Response,
+  Sse,
+} from '@nestjs/common';
+import { Response as Res } from 'express';
 import { LoginUserDto } from './amo/dto';
 import { AppService } from './app.service';
-import { redirectActions } from './@types';
+import { MessagaEvent, redirectActions } from './@types';
 import { HookBodyDto } from './amo/dto/hook/hook-body.dto';
 import { HookProducerService } from './hook.producer.service';
+import { OriginalUrl } from './app.decorator';
+import { interval, map, Observable } from 'rxjs';
 
 @Controller('gong')
 export class AppController {
+  private logger = new Logger();
   constructor(
     private appService: AppService,
     private hookProducer: HookProducerService,
@@ -20,8 +33,7 @@ export class AppController {
   @Get('login')
   getLogin(@Query('code') code: string, @Query('referer') referer: string) {
     const subdomain = String(referer).split('.')[0];
-    this.appService.getLogin(subdomain, code);
-    // const authCode = String(req.query.code);
+    return this.appService.getLogin(subdomain, code);
   }
 
   @Post('login')
@@ -32,13 +44,16 @@ export class AppController {
   @Get('delete')
   getDelete(@Query('account_id') account_id: string) {
     const accountId = Number(account_id);
-    this.appService.getDelete(accountId);
-    // return 'delete';
+    return this.appService.getDelete(accountId);
   }
 
   @Get('userstatus')
-  getUserStatus(@Query('subdomain') subdomain: string) {
-    return this.appService.getUserStatus(subdomain);
+  async getUserStatus(
+    @Query('subdomain') subdomain: string,
+    @Response() res: Res,
+  ) {
+    const status = await this.appService.getUserStatus(subdomain);
+    return res.set({ 'Access-Control-Allow-Origin': '*' }).send(status);
   }
 
   @Post('gong')
@@ -46,12 +61,15 @@ export class AppController {
     /** Можно возвращать объект самого хука
      * далее передать его в очередь, и в очереди прописать EMITTER
      */
-    const hook = this.appService.getHook(hookBodyDto);
-    await this.hookProducer.tempName(hook);
+    const hook = await this.appService.getHook(hookBodyDto);
+    if (hook) {
+      this.hookProducer.tempName(hook);
+    }
   }
 
-  // @Sse('connection')
-  // sse(@OriginalUrl('subdomain') subdomain: string): Observable<MessagaEvent> {
-  //   return this.appService.sseConnection(subdomain);
-  // }
+  @Sse('connection')
+  sse(@OriginalUrl('subdomain') subdomain: string): Observable<MessagaEvent> {
+    // return this.appService.sseConnection(subdomain);
+    return interval(5000).pipe(map(() => ({ data: 'ping ' })));
+  }
 }
