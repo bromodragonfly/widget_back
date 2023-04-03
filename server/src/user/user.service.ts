@@ -14,7 +14,7 @@ export class UserService {
 
   async createNewUser(CreateUserDto: CreateUserDto): Promise<User> {
     const createdUser = new this.userModel(CreateUserDto);
-    return createdUser.save();
+    return await createdUser.save();
   }
 
   async findUserBySubdomain(subdomain: string): Promise<User> {
@@ -45,5 +45,9 @@ export class UserService {
       { $set: { testPeriod: dto.testPeriod, paid: dto.paid } },
     );
     return this.logger.debug(`User ${dto.subdomain} updated succesfuly`);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.userModel.find().exec();
   }
 }

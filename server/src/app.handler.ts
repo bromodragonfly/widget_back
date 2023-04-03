@@ -1,13 +1,9 @@
 import { HookEntity } from './@types';
 import { HookBodyDto } from './amo/dto/hook/hook-body.dto';
 
-// TODO можно переделать в класс
-// TODO проверить возвращаемый объект на типы
-// TODO entity (скорее всего мне уже придет HookData)
+// TODO переделать в класс
 
 export const getHookEntity = (entity: HookBodyDto): HookEntity => {
-  //   const hookData = entity.body;
-
   const leadId = entity.event.data.id;
   const text = entity.action.settings.widget.settings.text;
 

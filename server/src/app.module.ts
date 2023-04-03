@@ -1,7 +1,4 @@
 import { Module } from '@nestjs/common';
-// import { AmoService } from './amo/amo.service';
-// import { AmoModule } from './amo/amo.module';
-// import { UserService } from './user/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,12 +8,15 @@ import { HookProducerService } from './hook.producer.service';
 import { UserModule } from './user/user.module';
 import { AmoModule } from './amo/amo.module';
 import { HookConsumer } from './hook.consumer';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SseModule } from './sse/sse.module';
+import { AmoApi } from './amo/amo';
 
 @Module({
   imports: [
-    AmoModule,
     HttpModule,
     UserModule,
+    SseModule,
     BullModule.registerQueue({
       name: 'hookQueue',
       redis: {
@@ -35,6 +35,6 @@ import { HookConsumer } from './hook.consumer';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, HookProducerService, HookConsumer],
+  providers: [AppService, HookProducerService, HookConsumer, AmoApi],
 })
 export class AppModule {}

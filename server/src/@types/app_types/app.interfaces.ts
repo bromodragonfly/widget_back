@@ -2,8 +2,8 @@ export enum redirectActions {
   LOGIN = 'login',
   DELETE = 'delete',
 }
-export interface MessagaEvent {
-  data: string | object;
+export interface MessagaEvent<T> {
+  data: string | T;
 }
 export interface HookEntity {
   leadId: string | number;
@@ -12,5 +12,4 @@ export interface HookEntity {
   users: string;
   subdomain: string;
   audio: string;
-  userPicture?: string;
 }

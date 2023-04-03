@@ -19,9 +19,14 @@ export class AppService {
     private userServise: UserService,
   ) {}
 
+  async getDB() {
+    const users = await this.userServise.getAllUsers();
+    return users;
+  }
+
   async getLogin(subdomain: string, code: string) {
     const amoService = new AmoApi(subdomain, code);
-    amoService.getAccessToken();
+    await amoService.getAccessToken();
     const isUserInDb = await this.userServise.findUserBySubdomain(subdomain);
     if (!isUserInDb) {
       const result = await amoService.getAccountData(); // TODO нужно описать приходящий объект
@@ -47,7 +52,10 @@ export class AppService {
     const user = await this.userServise.findUserByAccountID(accountId);
     const subdomain = user.widgetUserSubdomain;
 
-    return await this.userServise.updateUser({ subdomain, installed: false });
+    return await this.userServise.updateUser({
+      subdomain,
+      installed: false,
+    });
   }
 
   async redirectReducer(action: string, user: LoginUserDto | DeleteUserDto) {
@@ -82,7 +90,10 @@ export class AppService {
 
       if (isSubscribe > 0) {
         if (user.testPeriod) {
-          return JSON.stringify({ ...returnedData, response: 'trial' });
+          return JSON.stringify({
+            ...returnedData,
+            response: 'trial',
+          });
         }
         return JSON.stringify({ ...returnedData, response: 'paid' });
       } else {

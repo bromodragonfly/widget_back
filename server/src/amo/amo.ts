@@ -6,7 +6,7 @@ import config from './config';
 // import { RefreshAccessTokenDto } from './dto/get-access-token.dto';
 
 export class AmoApi {
-  private logger = new Logger();
+  private logger = new Logger('AMO Service');
 
   AMO_TOKEN_PATH: string;
   LIMIT: number;
@@ -16,7 +16,7 @@ export class AmoApi {
   subdomain: string;
   code: string;
 
-  constructor(subdomain: string, code: string) {
+  constructor(subdomain: string, code?: string) {
     this.AMO_TOKEN_PATH = `./${subdomain}_amo_token.json`;
     this.LIMIT = 200;
     this.ROOT_PATH = `https://${subdomain}.amocrm.ru`;
@@ -36,7 +36,6 @@ export class AmoApi {
       }
       return request(...args).catch(async (err: amoError) => {
         const errorBody = err.response ? err.response.data : null;
-        console.log(err.response);
         this.logger.error(errorBody);
         // this.logger.error(err);
         // this.logger.error(err.response.data);
@@ -68,10 +67,11 @@ export class AmoApi {
         redirect_uri: config.REDIRECT_URI,
       })
       .then((res) => {
+        this.logger.debug('Fresh token has been recieved');
         return res.data;
       })
       .catch((error) => {
-        this.logger.error(error);
+        this.logger.error('Error while requestAccessToken', error);
       });
   }
 
@@ -92,7 +92,6 @@ export class AmoApi {
       );
       this.logger.debug('Trying to get a new token');
       const token = await this.requestAccessToken();
-      this.logger.debug(token);
       fs.appendFileSync(this.AMO_TOKEN_PATH, JSON.stringify(token));
 
       this.access_token = token.access_token;
@@ -125,6 +124,15 @@ export class AmoApi {
 
   getAccountData = this.authChecker(async () => {
     const res = await axios.get(`${this.ROOT_PATH}/api/v4/account`, {
+      headers: {
+        Authorization: `Bearer ${this.access_token}`,
+      },
+    });
+    return res.data;
+  });
+
+  getDeal = this.authChecker(async (id) => {
+    const res = await axios.get(`${this.ROOT_PATH}/api/v4/leads/${id}`, {
       headers: {
         Authorization: `Bearer ${this.access_token}`,
       },

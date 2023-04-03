@@ -1,55 +1,55 @@
 version: '3.8'
 services:
-  mongo:
-    container_name: gong_db
-    image: mongo:latest
-    environment:
-      - MONGODB_DATABASE="GongWidget" # Change on yours DB_NAME
-    ports:
-      - 27017:27017
-    volumes:
-      - mongodb_data_container:/data/db
+    mongo:
+        container_name: gong_db
+        image: mongo:latest
+        environment:
+            - MONGODB_DATABASE="GongWidget" # Change on yours DB_NAME
+        ports:
+            - 27017:27017
+        volumes:
+            - mongodb_data_container:/data/db
 
-  mongo-express: # mongo-express for administrate Mongo database in browser ("admin:pass") - basicAuth
-    links:
-      - 'mongo'
-    image: mongo-express:latest
-    restart: always
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=mongo
-      - ME_CONFIG_MONGODB_PORT=27017
-    depends_on:
-      - mongo
-    ports:
-      - 8081:8081
+    mongo-express: # mongo-express for administrate Mongo database in browser ("admin:pass") - basicAuth
+        links:
+            - 'mongo'
+        image: mongo-express:latest
+        restart: always
+        environment:
+            - ME_CONFIG_MONGODB_SERVER=mongo
+            - ME_CONFIG_MONGODB_PORT=27017
+        depends_on:
+            - mongo
+        ports:
+            - 8081:8081
 
-  redis:
-    image: redis:alpine
-    ports:
-      - 6379:6379
+    redis:
+        image: redis:alpine
+        ports:
+            - 6379:6379
 
-  widget:
-    restart: on-failure
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - 4200:4200
-    depends_on:
-      - mongo
+    widget:
+        restart: on-failure
+        build:
+            context: ./server
+            dockerfile: Dockerfile
+        ports:
+            - 4200:4200
+        depends_on:
+            - mongo
+        volumes:
+            - widget_data_container:/data/widget
 
-  nginx:
-    restart: always
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    ports:
-      - 80:80
-    depends_on:
-      - widget
+    nginx:
+        restart: always
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        ports:
+            - 80:80
+        depends_on:
+            - widget
 
 volumes:
-  mongodb_data_container:
-# networks:
-#   mongo:
-#     driver: bridge
+    mongodb_data_container:
+    widget_data_container:

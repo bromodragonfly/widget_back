@@ -1,22 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { HttpService } from '@nestjs/axios';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HookProducerService } from './hook.producer.service';
+import { UserService } from './user/user.service';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let controller: AppController;
+  let service: AppService;
 
-  beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
-    }).compile();
+  beforeEach(() => {
+    service = new AppService(new HttpService(), UserService);
+    controller = new AppController(AppService, HookProducerService);
+    //     const app: TestingModule = await Test.createTestingModule({
+    //       controllers: [AppController],
+    //       providers: [AppService],
+    //     })
+    //       .overrideProvider(AppService)
+    //       .useValue(MockAppService)
+    //       .compile();
 
-    appController = app.get<AppController>(AppController);
+    //     controller = app.get<AppController>(AppController);
+    //   });
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  describe('test', () => {
+    it('sdskapdas', async () => {});
   });
 });

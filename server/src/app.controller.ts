@@ -2,24 +2,22 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Logger,
   Post,
   Query,
   Response,
-  Sse,
 } from '@nestjs/common';
-import { Response as Res } from 'express';
+import { Request as Req, Response as Res } from 'express';
 import { LoginUserDto } from './amo/dto';
 import { AppService } from './app.service';
-import { MessagaEvent, redirectActions } from './@types';
+import { redirectActions } from './@types';
 import { HookBodyDto } from './amo/dto/hook/hook-body.dto';
 import { HookProducerService } from './hook.producer.service';
-import { OriginalUrl } from './app.decorator';
-import { interval, map, Observable } from 'rxjs';
 
 @Controller('gong')
 export class AppController {
-  private logger = new Logger();
+  private logger = new Logger('AppController');
   constructor(
     private appService: AppService,
     private hookProducer: HookProducerService,
@@ -30,9 +28,15 @@ export class AppController {
     return 'pong ' + Date.now();
   }
 
-  @Get('login')
+  @Get('users')
+  getUsers() {
+    return this.appService.getDB();
+  }
+
+  @Get('login') //! onsave
   getLogin(@Query('code') code: string, @Query('referer') referer: string) {
     const subdomain = String(referer).split('.')[0];
+
     return this.appService.getLogin(subdomain, code);
   }
 
@@ -58,18 +62,9 @@ export class AppController {
 
   @Post('gong')
   async getHookGong(@Body() hookBodyDto: HookBodyDto) {
-    /** Можно возвращать объект самого хука
-     * далее передать его в очередь, и в очереди прописать EMITTER
-     */
     const hook = await this.appService.getHook(hookBodyDto);
     if (hook) {
-      this.hookProducer.tempName(hook);
+      return this.hookProducer.addInQueue(hook);
     }
-  }
-
-  @Sse('connection')
-  sse(@OriginalUrl('subdomain') subdomain: string): Observable<MessagaEvent> {
-    // return this.appService.sseConnection(subdomain);
-    return interval(5000).pipe(map(() => ({ data: 'ping ' })));
   }
 }
